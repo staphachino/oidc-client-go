@@ -1,4 +1,4 @@
-package main
+package oidc
 
 import (
 	"encoding/json"
@@ -68,8 +68,4 @@ func NewOidcClient(iss, id, secret string) (*OidcClient, error) {
 	result.clientSecret = secret
 
 	return &result, nil
-}
-
-func main() {
-	log.Printf("This is not for the console")
 }
