@@ -69,3 +69,7 @@ func NewOidcClient(iss, id, secret string) (*OidcClient, error) {
 
 	return &result, nil
 }
+
+func main() {
+	log.Printf("This is not for the console")
+}
