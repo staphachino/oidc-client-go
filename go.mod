@@ -1,4 +1,4 @@
-module github.com/staphachino/oidc-client
+module github.com/staphachino/oidc-client-go
 
 go 1.24.0
 
