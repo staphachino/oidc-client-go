@@ -129,7 +129,6 @@ func (o *OidcClient) Validate(token string) (map[string]interface{}, error) {
 	if !parsed.Valid {
 		return nil, fmt.Errorf("JWT invalid")
 	}
-
 	if err := claims.Valid(); err != nil {
 		return nil, fmt.Errorf("claims validation failed: %w", err)
 	}
@@ -245,11 +244,11 @@ func (o *OidcClient) getJwks() (*[]JWK, error) {
 		return nil, err
 	}
 
-	var jwks []JWK
-	if err := json.Unmarshal(body, &jwks); err != nil {
+	var jwksData jwksResponse
+	if err := json.Unmarshal(body, &jwksData); err != nil {
 		return nil, err
 	}
+	o.Jwks = &jwksData.Keys
 
-	o.Jwks = &jwks
-	return &jwks, nil
+	return &jwksData.Keys, nil
 }

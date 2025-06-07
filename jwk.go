@@ -23,6 +23,10 @@ type JWK struct {
 	Y   string `json:"y,omitempty"`
 }
 
+type jwksResponse struct {
+	Keys []JWK `json:"keys"`
+}
+
 func (j *JWK) rsaPublicKey() (*rsa.PublicKey, error) {
 	nb, err := base64.RawURLEncoding.DecodeString(j.N)
 	if err != nil {
