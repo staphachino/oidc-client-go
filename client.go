@@ -93,6 +93,12 @@ func (o *OidcClient) Introspect(token string) (map[string]interface{}, error) {
 }
 
 func (o *OidcClient) Validate(token string) (map[string]interface{}, error) {
+	if o.Jwks == nil {
+		if _, err := o.getJwks(); err != nil {
+			return nil, fmt.Errorf("failed to fetch JWKS: %w", err)
+		}
+	}
+
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		kid, ok := token.Header["kid"].(string)
 		if !ok {
@@ -160,6 +166,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string, scopes []st
 			log.Printf("There was an error reading the response body: %s", err)
 			return nil
 		}
+
 		log.Printf("Exchange response body: %s", string(body))
 		token := &OidcExchangeResponse{}
 		err = json.Unmarshal(body, token)
