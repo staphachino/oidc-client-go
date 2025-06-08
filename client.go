@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -263,6 +264,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 		if err != nil {
 			return nil, err
 		}
+		c.Token = token
 		return token, nil
 
 	case "client_credentials":
@@ -311,6 +313,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 		if err != nil {
 			return nil, err
 		}
+		c.Token = token
 		return token, nil
 
 	case "refresh_token":
@@ -341,6 +344,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 			return nil, err
 		}
 		defer resp.Body.Close()
+
 		if resp.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("token endpoint returned HTTP %d", resp.StatusCode)
 		}
@@ -355,6 +359,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 		if err != nil {
 			return nil, err
 		}
+		c.Token = token
 		return token, nil
 
 	case "authorization_code":
@@ -398,6 +403,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 		if err != nil {
 			return nil, err
 		}
+		c.Token = token
 		return token, nil
 
 	case "urn:ietf:params:oauth:grant-type:device_code":
@@ -466,6 +472,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 				if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
 					return nil, err
 				}
+				c.Token = &token
 				return &token, nil
 			}
 
@@ -575,6 +582,7 @@ func (c *OidcClient) EndSession(idTokenHint, postLogoutRedirectURI string) error
 	if idTokenHint != "" {
 		params.Set("id_token_hint", idTokenHint)
 	}
+
 	if postLogoutRedirectURI != "" {
 		params.Set("post_logout_redirect_uri", postLogoutRedirectURI)
 	}
@@ -598,6 +606,38 @@ func (c *OidcClient) EndSession(idTokenHint, postLogoutRedirectURI string) error
 	}
 
 	return nil
+}
+
+func (c *OidcClient) LoadTokenFromFile(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read token file: %w", err)
+	}
+
+	var token OidcToken
+	if err := json.Unmarshal(data, &token); err != nil {
+		return fmt.Errorf("failed to unmarshal token: %w", err)
+	}
+
+	if token.IsExpired() && token.RefreshToken != "" {
+		refreshed, err := c.Exchange("refresh_token", token.RefreshToken, "")
+		if err != nil {
+			return fmt.Errorf("refresh failed: %w", err)
+		}
+		refreshed.ObtainedAt = time.Now()
+		c.Token = refreshed
+		return nil
+	}
+
+	c.Token = &token
+	return nil
+}
+
+func (c *OidcClient) SaveTokenToFile(path string) error {
+	if c.Token == nil {
+		return fmt.Errorf("no token to save")
+	}
+	return c.Token.SaveToFile(path)
 }
 
 func (c *OidcClient) getJwks() (*[]JWK, error) {
