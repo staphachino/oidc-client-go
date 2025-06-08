@@ -10,23 +10,6 @@ import (
 	"math/big"
 )
 
-type JWK struct {
-	Kty string `json:"kty"`
-	Kid string `json:"kid"`
-	Use string `json:"use"`
-	// RSA fields
-	N string `json:"n,omitempty"`
-	E string `json:"e,omitempty"`
-	// EC fields
-	Crv string `json:"crv,omitempty"`
-	X   string `json:"x,omitempty"`
-	Y   string `json:"y,omitempty"`
-}
-
-type jwksResponse struct {
-	Keys []JWK `json:"keys"`
-}
-
 func (j *JWK) rsaPublicKey() (*rsa.PublicKey, error) {
 	nb, err := base64.RawURLEncoding.DecodeString(j.N)
 	if err != nil {
