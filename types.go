@@ -38,6 +38,7 @@ type OidcClient struct {
 	httpCancel                        context.CancelFunc
 	requestedScopes                   []string
 	redirectURI                       string
+	resultToken                       chan OidcToken
 }
 
 type OidcDeviceCode struct {

@@ -46,7 +46,6 @@ func TestOidcClient_Validate_RSA_UnknownKid(t *testing.T) {
 		t.Fatalf("failed to sign token: %v", err)
 	}
 
-	// JWKS has a different kid
 	jwk := rsaPublicKeyToJWK("correct-kid", pubKey)
 	client := &OidcClient{Jwks: &[]JWK{jwk}}
 
@@ -58,7 +57,7 @@ func TestOidcClient_Validate_RSA_UnknownKid(t *testing.T) {
 
 func TestOidcClient_Validate_RSA_InvalidSignature(t *testing.T) {
 	signingKey := generateRSAKey(t)
-	wrongKey := generateRSAKey(t) // public key won't match
+	wrongKey := generateRSAKey(t)
 	kid := "test-kid"
 
 	claims := jwt.MapClaims{
@@ -86,7 +85,7 @@ func TestOidcClient_Validate_RSA_ExpiredToken(t *testing.T) {
 
 	claims := jwt.MapClaims{
 		"sub": "expired-user",
-		"exp": time.Now().Add(-10 * time.Minute).Unix(), // expired
+		"exp": time.Now().Add(-10 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = kid

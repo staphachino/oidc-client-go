@@ -52,6 +52,7 @@ func NewOidcClient(iss, id, secret string) (*OidcClient, error) {
 
 	result.clientId = id
 	result.clientSecret = secret
+	result.resultToken = make(chan OidcToken, 1)
 
 	return &result, nil
 }

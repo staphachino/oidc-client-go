@@ -175,7 +175,8 @@ func (c *OidcClient) Validate(token string) (map[string]interface{}, error) {
 	return claims, nil
 }
 
-func (c *OidcClient) Authorize() {
+func (c *OidcClient) Authorize() <-chan OidcToken {
+	c.resultToken = make(chan OidcToken, 1)
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
 		log.Fatalf("Failed to acquire a port: %v", err)
@@ -205,8 +206,11 @@ func (c *OidcClient) Authorize() {
 	authEndpoint := fmt.Sprintf("http://localhost:%d/", port)
 	log.Printf("Open the following URL in your browser: %s", authEndpoint)
 
-	<-c.httpContext.Done()
-	_ = c.httpServer.Shutdown(context.Background())
+	go func() {
+		<-c.httpContext.Done()
+		_ = c.httpServer.Shutdown(context.Background())
+	}()
+	return c.resultToken
 }
 
 func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken, error) {
@@ -721,6 +725,8 @@ func (c *OidcClient) callbackHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "token exchange failed", http.StatusInternalServerError)
 		return
 	}
+
+	c.resultToken <- *token
 
 	log.Printf("access token: %s", token.AccessToken)
 

@@ -13,7 +13,6 @@ import (
 )
 
 func TestOidcClient_Validate_ECDSA(t *testing.T) {
-	// Step 1: Generate ECDSA key pair
 	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		t.Fatalf("failed to generate ECDSA key: %v", err)
@@ -22,7 +21,6 @@ func TestOidcClient_Validate_ECDSA(t *testing.T) {
 
 	kid := "ecdsa-kid-1"
 
-	// Step 2: Create a signed JWT
 	claims := jwt.MapClaims{
 		"sub": "user456",
 		"exp": time.Now().Add(5 * time.Minute).Unix(),
@@ -36,7 +34,6 @@ func TestOidcClient_Validate_ECDSA(t *testing.T) {
 		t.Fatalf("failed to sign JWT: %v", err)
 	}
 
-	// Step 3: Create matching JWK
 	jwk := JWK{
 		Kid: kid,
 		Kty: "EC",
@@ -49,13 +46,11 @@ func TestOidcClient_Validate_ECDSA(t *testing.T) {
 		Jwks: &[]JWK{jwk},
 	}
 
-	// Step 4: Validate the JWT
 	claimsOut, err := client.Validate(signedToken)
 	if err != nil {
 		t.Fatalf("Validate() failed: %v", err)
 	}
 
-	// Step 5: Manual assertions
 	gotSub, ok := claimsOut["sub"]
 	if !ok {
 		t.Fatalf("Expected 'sub' in claims but not found")
@@ -72,7 +67,6 @@ func TestOidcClient_Validate_ECDSA_UnknownKid(t *testing.T) {
 	}
 	pubKey := &privKey.PublicKey
 
-	// JWT uses this kid
 	jwtKid := "jwt-kid"
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
 		"sub": "user789",
@@ -84,7 +78,6 @@ func TestOidcClient_Validate_ECDSA_UnknownKid(t *testing.T) {
 		t.Fatalf("failed to sign JWT: %v", err)
 	}
 
-	// JWKS has a different kid
 	jwk := JWK{
 		Kid: "wrong-kid",
 		Kty: "EC",
@@ -103,7 +96,6 @@ func TestOidcClient_Validate_ECDSA_UnknownKid(t *testing.T) {
 }
 
 func TestOidcClient_Validate_ECDSA_InvalidSignature(t *testing.T) {
-	// Use one key to sign...
 	privKey1, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	pubKey2, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 
@@ -115,9 +107,8 @@ func TestOidcClient_Validate_ECDSA_InvalidSignature(t *testing.T) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 	token.Header["kid"] = kid
-	signedToken, _ := token.SignedString(privKey1) // signed with key1
+	signedToken, _ := token.SignedString(privKey1)
 
-	// JWKS has pubKey2 instead (won’t match)
 	jwk := JWK{
 		Kid: kid,
 		Kty: "EC",
