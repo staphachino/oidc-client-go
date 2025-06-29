@@ -214,8 +214,8 @@ func (c *OidcClient) Authorize() <-chan OidcToken {
 }
 
 func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken, error) {
-	if grant_type == "" || username == "" || password == "" {
-		return nil, fmt.Errorf("grant_type, username and password are required")
+	if grant_type == "" || username == "" {
+		return nil, fmt.Errorf("grant_type and username are required")
 	}
 
 	if c.httpClient == nil {
@@ -225,6 +225,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 	if !c.isGrantTypeSupported(grant_type) {
 		return nil, fmt.Errorf("grant_type %q is not supported by the OIDC provider", grant_type)
 	}
+	// https://idp.chrish.net/application/o/authorize/?response_type=code&client_id=GyJSaZt5XxNSicCEJYA6O8hy1Z45e9AP8Fio4VIi&redirect_uri=http%3A%2F%2Flocalhost%3A57597%2Fcallback&scope=&state=mfpfAWo_3oLkqv6GyGZgZVhAGDKytzKsQUh-qnsxF1s=
 
 	switch grant_type {
 	case "password":
