@@ -411,13 +411,8 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 			return nil, fmt.Errorf("token endpoint returned HTTP %d", resp.StatusCode)
 		}
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
 		token := &OidcToken{}
-		err = json.Unmarshal(body, token)
+		err = json.Unmarshal(bodyBytes, token)
 		if err != nil {
 			return nil, err
 		}
