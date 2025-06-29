@@ -386,8 +386,13 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 			return nil, err
 		}
 
+		if c.redirectURI == "" {
+			return nil, fmt.Errorf("redirect uri not set")
+		}
+
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		therequest := fmt.Sprintf("grant_type=%s&client_id=%s&client_secret=%s&code=%s&scope=%s", grant_type, c.clientId, c.clientSecret, username, c.GetScopesAsString())
+		req.SetBasicAuth(c.clientId, c.clientSecret)
+		therequest := fmt.Sprintf("grant_type=%s&code=%s&redirect_uri=%s&scope=%s", grant_type, username, c.redirectURI, c.GetScopesAsString())
 		req.Body = io.NopCloser(strings.NewReader(therequest))
 
 		resp, err := c.httpClient.Do(req)
