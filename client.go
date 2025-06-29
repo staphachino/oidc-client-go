@@ -215,7 +215,7 @@ func (c *OidcClient) Authorize() <-chan OidcToken {
 
 func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken, error) {
 	if grant_type == "" || username == "" {
-		return nil, fmt.Errorf("grant_type and username are required")
+		return nil, fmt.Errorf("grant_type, username are required")
 	}
 
 	if c.httpClient == nil {
@@ -306,6 +306,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("token endpoint returned HTTP %d", resp.StatusCode)
+
 		}
 
 		body, err := io.ReadAll(resp.Body)
@@ -394,7 +395,14 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 			return nil, err
 		}
 		defer resp.Body.Close()
+
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("token endpoint returned HTTP %d (failed to read body: %v)", resp.StatusCode, err)
+		}
+
 		if resp.StatusCode != http.StatusOK {
+			fmt.Println("Error response body:", string(bodyBytes))
 			return nil, fmt.Errorf("token endpoint returned HTTP %d", resp.StatusCode)
 		}
 
