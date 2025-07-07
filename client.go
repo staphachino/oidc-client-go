@@ -289,15 +289,18 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 			return nil, fmt.Errorf("scopes not set")
 		}
 
-		req, err := http.NewRequest("POST", c.TokenEndpoint, nil)
+		form := url.Values{}
+		form.Set("grant_type", "client_credentials")
+		form.Set("client_id", username)
+		form.Set("client_secret", password)
+		form.Set("scope", c.GetScopesAsString())
+
+		req, err := http.NewRequest("POST", c.TokenEndpoint, strings.NewReader(form.Encode()))
 		if err != nil {
 			return nil, err
 		}
 
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(username+":"+password)))
-		therequest := fmt.Sprintf("grant_type=%s&client_id=%s&scope=%s", grant_type, c.clientId, c.GetScopesAsString())
-		req.Body = io.NopCloser(strings.NewReader(therequest))
 
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
