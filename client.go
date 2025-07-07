@@ -289,18 +289,14 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 			return nil, fmt.Errorf("scopes not set")
 		}
 
-		form := url.Values{}
-		form.Set("grant_type", "client_credentials")
-		form.Set("client_id", username)
-		form.Set("client_secret", password)
-		form.Set("scope", c.GetScopesAsString())
-
-		req, err := http.NewRequest("POST", c.TokenEndpoint, strings.NewReader(form.Encode()))
+		req, err := http.NewRequest("POST", c.TokenEndpoint, nil)
 		if err != nil {
 			return nil, err
 		}
 
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		therequest := fmt.Sprintf("grant_type=%s&client_id=%s&scope=%s&username=%s&password=%s", grant_type, c.clientId, c.GetScopesAsString(), username, password)
+		req.Body = io.NopCloser(strings.NewReader(therequest))
 
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
@@ -314,7 +310,7 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("token endpoint returned HTTP %d, body: %v\n", resp.StatusCode, string(body))
+			return nil, fmt.Errorf("token endpoint returned HTTP %d", resp.StatusCode)
 		}
 
 		token := &OidcToken{}
@@ -642,6 +638,10 @@ func (c *OidcClient) LoadTokenFromFile(path string) (*OidcToken, error) {
 		}
 		refreshed.ObtainedAt = time.Now()
 		c.Token = refreshed
+		err = c.SaveTokenToFile(path)
+		if err != nil {
+			return &token, fmt.Errorf("failed to save refreshed token: %w", err)
+		}
 		return &token, nil
 	}
 
