@@ -621,29 +621,29 @@ func (c *OidcClient) EndSession(idTokenHint, postLogoutRedirectURI string) error
 	return nil
 }
 
-func (c *OidcClient) LoadTokenFromFile(path string) error {
+func (c *OidcClient) LoadTokenFromFile(path string) (*OidcToken, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("failed to read token file: %w", err)
+		return nil, fmt.Errorf("failed to read token file: %w", err)
 	}
 
 	var token OidcToken
 	if err := json.Unmarshal(data, &token); err != nil {
-		return fmt.Errorf("failed to unmarshal token: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal token: %w", err)
 	}
 
 	if token.IsExpired() && token.RefreshToken != "" {
 		refreshed, err := c.Exchange("refresh_token", token.RefreshToken, "")
 		if err != nil {
-			return fmt.Errorf("refresh failed: %w", err)
+			return nil, fmt.Errorf("refresh failed: %w", err)
 		}
 		refreshed.ObtainedAt = time.Now()
 		c.Token = refreshed
-		return nil
+		return &token, nil
 	}
 
 	c.Token = &token
-	return nil
+	return &token, nil
 }
 
 func (c *OidcClient) SaveTokenToFile(path string) error {
@@ -742,6 +742,8 @@ func (c *OidcClient) callbackHandler(w http.ResponseWriter, r *http.Request) {
 	if c.httpCancel != nil {
 		c.httpCancel()
 	}
+
+	w.Write([]byte("OK"))
 }
 
 func (c *OidcClient) loginHandler(w http.ResponseWriter, r *http.Request) {
