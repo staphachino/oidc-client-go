@@ -304,14 +304,14 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 			return nil, err
 		}
 		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("token endpoint returned HTTP %d", resp.StatusCode)
-
-		}
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("token endpoint returned HTTP %d, body: %v\n", resp.StatusCode, string(body))
 		}
 
 		token := &OidcToken{}
