@@ -175,8 +175,8 @@ func (c *OidcClient) Validate(token string) (map[string]interface{}, error) {
 	return claims, nil
 }
 
-func (c *OidcClient) Authorize() <-chan OidcToken {
-	c.resultToken = make(chan OidcToken, 1)
+func (c *OidcClient) Authorize() <-chan *OidcToken {
+	c.resultToken = make(chan *OidcToken, 1)
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
 		log.Fatalf("Failed to acquire a port: %v", err)
@@ -735,7 +735,7 @@ func (c *OidcClient) callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.resultToken <- *token
+	c.resultToken <- token
 
 	log.Printf("access token: %s", token.AccessToken)
 
