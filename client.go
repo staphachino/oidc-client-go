@@ -214,8 +214,8 @@ func (c *OidcClient) Authorize() <-chan *OidcToken {
 }
 
 func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken, error) {
-	if grant_type == "" || username == "" {
-		return nil, fmt.Errorf("grant_type, username are required")
+	if grant_type == "" {
+		return nil, fmt.Errorf("grant_type is required")
 	}
 
 	if c.httpClient == nil {
