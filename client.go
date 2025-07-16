@@ -41,7 +41,7 @@ func (c *OidcClient) GetScopes() []string {
 }
 
 func (c *OidcClient) GetScopesAsString() string {
-	return strings.Join(c.requestedScopes, "+")
+	return strings.Join(c.requestedScopes, " ")
 }
 
 func (c *OidcClient) SetScopes(scopes []string) error {
@@ -225,7 +225,6 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 	if !c.isGrantTypeSupported(grant_type) {
 		return nil, fmt.Errorf("grant_type %q is not supported by the OIDC provider", grant_type)
 	}
-	// https://idp.chrish.net/application/o/authorize/?response_type=code&client_id=GyJSaZt5XxNSicCEJYA6O8hy1Z45e9AP8Fio4VIi&redirect_uri=http%3A%2F%2Flocalhost%3A57597%2Fcallback&scope=&state=mfpfAWo_3oLkqv6GyGZgZVhAGDKytzKsQUh-qnsxF1s=
 
 	switch grant_type {
 	case "password":
@@ -430,6 +429,8 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 		form := url.Values{}
 		form.Set("client_id", c.clientId)
 		form.Set("scope", c.GetScopesAsString())
+
+		log.Printf("form: %s", form.Encode())
 
 		req, err := http.NewRequest("POST", c.DeviceAuthorizationEndpoint, strings.NewReader(form.Encode()))
 		if err != nil {
