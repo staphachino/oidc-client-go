@@ -430,8 +430,6 @@ func (c *OidcClient) Exchange(grant_type, username, password string) (*OidcToken
 		form.Set("client_id", c.clientId)
 		form.Set("scope", c.GetScopesAsString())
 
-		log.Printf("form: %s", form.Encode())
-
 		req, err := http.NewRequest("POST", c.DeviceAuthorizationEndpoint, strings.NewReader(form.Encode()))
 		if err != nil {
 			return nil, err
@@ -627,27 +625,30 @@ func (c *OidcClient) LoadTokenFromFile(path string) (*OidcToken, error) {
 		return nil, fmt.Errorf("failed to read token file: %w", err)
 	}
 
-	var token OidcToken
+	var token *OidcToken
 	if err := json.Unmarshal(data, &token); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal token: %w", err)
 	}
+	log.Printf("expired: %v\n", token.IsExpired())
 
 	if token.IsExpired() && token.RefreshToken != "" {
-		refreshed, err := c.Exchange("refresh_token", token.RefreshToken, "")
+		log.Printf("refreshing token\n")
+		token, err := c.Exchange("refresh_token", token.RefreshToken, "")
 		if err != nil {
 			return nil, fmt.Errorf("refresh failed: %w", err)
 		}
-		refreshed.ObtainedAt = time.Now()
-		c.Token = refreshed
+		log.Printf("refreshed token: %v\n", token)
+		token.ObtainedAt = time.Now()
+		c.Token = token
 		err = c.SaveTokenToFile(path)
 		if err != nil {
-			return &token, fmt.Errorf("failed to save refreshed token: %w", err)
+			return token, fmt.Errorf("failed to save refreshed token: %w", err)
 		}
-		return &token, nil
+		return token, nil
+	} else {
+		c.Token = token
+		return token, nil
 	}
-
-	c.Token = &token
-	return &token, nil
 }
 
 func (c *OidcClient) SaveTokenToFile(path string) error {
