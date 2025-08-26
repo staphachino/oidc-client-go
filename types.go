@@ -27,6 +27,9 @@ type OidcClient struct {
 	ClaimsSupported                   []string `json:"claims_supported"`
 	ClaimsParameterSupported          bool     `json:"claims_parameter_supported"`
 	CodeChallengeMethodsSupported     []string `json:"code_challenge_methods_supported"`
+	BackChannelLogoutSupported        bool     `json:"backchannel_logout_supported"`
+	BackChannelLogoutSessionSupported bool     `json:"backchannel_logout_session_supported"`
+	BackChannelLogoutChannel          chan string
 	Jwks                              *[]JWK
 	Token                             *OidcToken
 	clientId                          string

@@ -769,3 +769,25 @@ func (c *OidcClient) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, url, http.StatusFound)
 }
+
+func (c *OidcClient) BackChannelLogoutHandler(w http.ResponseWriter, r *http.Request) {
+	if c.BackChannelLogoutSupported {
+		err := r.ParseForm()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("BAD_REQUEST"))
+			return
+		}
+
+		if r.FormValue("logout_token") != "" {
+			c.BackChannelLogoutChannel <- r.FormValue("logout_token")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OK"))
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("BAD_REQUEST"))
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("BAD_REQUEST"))
+	}
+}
